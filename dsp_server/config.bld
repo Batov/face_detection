@@ -1,0 +1,99 @@
+/*
+ *  ======== config.bld ========
+ *  This script is run prior to all build scripts.  It initializes the
+ *  rootDir configuration parameter of all supported targets.
+ *
+ *  There are more details about config.bld here:
+ *  http://rtsc.eclipse.org/docs-tip/Glossary#config.bld
+ */
+
+var Build = xdc.useModule('xdc.bld.BuildEnvironment');
+var Pkg = xdc.useModule('xdc.bld.PackageContents');
+var C674_rootdir;
+
+/* initialize local vars with those set in xdcpaths.mak (via XDCARGS) */
+for (x = 0; x < arguments.length; x++) {
+    if (arguments[x].match(/^CGTOOLS_C674=/)) {
+        C674_rootdir = arguments[x].split("=")[1];
+    }
+}
+
+// c0000000 - c8000000 - Linux
+// c8000000 - ca000000 - CMEM
+// ca000000 - cd000000 - DDRALGHEAP
+// cd000000 - cf000000 - DDR2
+// cf000000 - cf800000 - SR1
+// cf800000 - d0000000 - SYSLINK
+
+var mem_ext = [
+["DDRCMEM", {
+    comment:    "DDRCMEM: off-chip memory for CMEM",
+    name:       "DDRCMEM",
+    base:       0xc8000000,
+    len:        0x02000000,
+    space:      "data"
+    }
+],
+["DDRALGHEAP", {
+    comment:    "DDRALGHEAP: off-chip memory for dynamic allocation",
+    name:       "DDRALGHEAP",
+    base:       0xca000000,
+    len:        0x03000000,
+    space:      "code/data"
+    }
+],
+["DDR2", {
+    comment:    "DDR2: off-chip memory for DSP code and data",
+    name:       "DDR2",
+    base:       0xcd000000,
+    len:        0x02000000,
+    space:      "code/data"
+    }
+],
+["SR1", {
+    comment:    "DDR2 Memory reserved for use by SharedRegion 1",
+    name:       "SR1",
+    base:       0xcf000000,
+    len:        0x00800000,
+    space:      "code/data"
+    }
+],
+["SYSLINK", {
+    comment:    "SysLink shared memory",
+    name:       "SYSLINK",
+    base:       0xcf800000,
+    len:        0x00800000,
+    space:      "code/data"
+    }
+],
+];
+
+/* platform instances used by this package */
+Build.platformTable["ti.platforms.evmOMAPL138"] = {
+    externalMemoryMap: mem_ext,
+    l1DMode:"32k",
+    l1PMode:"32k",
+    l2Mode:"128k",
+    codeMemory: "DDR2",
+    dataMemory: "DDR2",
+    stackMemory: "DDR2"
+};
+
+
+if (C674_rootdir) {
+var targ = xdc.useModule('ti.targets.elf.C674');
+targ.rootDir = C674_rootdir;
+targ.platforms = [
+    "ti.platforms.evmOMAPL138"
+];
+Build.targets.$add(targ);
+
+/* We remove a few profiles, just to cut down on build time */
+delete targ.profiles["coverage"];
+delete targ.profiles["profile"];
+delete targ.profiles["whole_program"];
+delete targ.profiles["whole_program_debug"];
+}
+
+/* Create a .zip or .tar file for redistribution. */
+Pkg.attrs.archiver = 'tar';

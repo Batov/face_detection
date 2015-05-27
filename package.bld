@@ -1,0 +1,63 @@
+/*
+ *  ======== package.bld ========
+ */
+
+var Build = xdc.useModule('xdc.bld.BuildEnvironment');
+var Pkg = xdc.useModule('xdc.bld.PackageContents');
+
+/* If you don't want to redistribute your sources, set this to false. */
+Pkg.attrs.exportSrc = false;
+
+/* lib/ is a generated directory that 'xdc clean' should remove */
+Pkg.generatedFiles.$add("lib/");
+
+/* include/ folder for headers */
+Pkg.attrs.incs="-I./include";
+
+var publicHeader = "trik_vidtranscode_cv.h";
+
+/* Always include the public header file in the generated release archive */
+Pkg.otherFiles.$add(publicHeader);
+/*Pkg.otherFiles.$add("trik_vidtranscode_cv.pdf");*/
+
+/*
+ * Create an array containing the source files needed to build this
+ * package.  Note that the extension is added by XDC, so it need
+ * not be explicitly specified.
+ */
+var SRCS = ["src/vidtranscode_cv_fxns.c",
+            "src/vidtranscode_cv.cpp"];
+
+
+for (var i = 0; i < Build.targets.length; i++) {
+    var targ = Build.targets[i];
+
+    print("building for target " + targ.name + " ...");
+
+    /* Build for all profiles */
+    for (var profile in targ.profiles) {
+
+        var libName = "lib/" + profile + "/trik_vidtranscode_cv";
+        var fullLibName = libName + '.a' + targ.suffix;
+
+        Pkg.addLibrary(libName, targ, {
+            profile: profile
+        }).addObjects(SRCS);
+
+        /* and use the QualiTI-provided template to generate .qti scripts */
+        var qtiAttrs = [
+                "TRIK",               // vendor
+                publicHeader,       // headers (relative to base dir)
+                "IVIDTRANSCODE_CV",     // interface name
+                "TRIK_VIDTRANSCODE_CV",      // module name,
+                fullLibName,        // lib name (relative to base dir)
+                "../.."             // base dir (relative to .qti script)
+        ];
+
+        xdc.loadTemplate("ti/xdais/qualiti/QtiProject.xdt").genFile(
+                fullLibName + '.qti', Pkg, qtiAttrs);
+
+        /* Include the newly generated .qti script to the release */
+        Pkg.otherFiles.$add(fullLibName + '.qti');
+    }
+}

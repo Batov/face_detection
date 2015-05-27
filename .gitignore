@@ -1,0 +1,31 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+# XDC generates files
+.dlls
+.executables
+.interfaces
+.libraries
+.libraries,*
+.xdcenv.mak
+bin
+lib
+package
+package.mak
+
+# Built package
+/trik_vidtranscode_cv.tar
+/trik_vidtranscode_cv.zip
+/dsp_server/trik_vidtranscode_cv_dsp_server.tar
+/dsp_server/trik_vidtranscode_cv_dsp_server.zip

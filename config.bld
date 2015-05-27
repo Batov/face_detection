@@ -1,0 +1,41 @@
+/*
+ *  ======== config.bld ========
+ *  This script is run prior to all build scripts.  It initializes the
+ *  rootDir configuration parameter of all supported targets.
+ *
+ *  There are more details about config.bld here:
+ *  http://rtsc.eclipse.org/docs-tip/Glossary#config.bld
+ */
+
+var Build = xdc.useModule("xdc.bld.BuildEnvironment");
+var Pkg = xdc.useModule("xdc.bld.PackageContents");
+var C674_rootdir;
+
+/* initialize local vars with those set in rules.mak (via XDCARGS) */
+for (x = 0; x < arguments.length; x++) {
+    if (arguments[x].match(/^CGTOOLS_C674=/)) {
+        C674_rootdir = arguments[x].split("=")[1];
+    }
+}
+
+if (C674_rootdir) {
+var targ = xdc.useModule("ti.targets.elf.C674");
+targ.rootDir = C674_rootdir;
+targ.ccOpts.suffix  = "--gcc -pden --gen_func_subsections --interrupt_threshold=50 ";
+targ.ccOpts.suffix += "--no_bad_aliases --no_reload_errors ";
+targ.profiles["release"].compileOpts.copts  = "--opt_level=3 --opt_for_speed=5 --call_assumptions=3 --auto_inline --speculate_loads=16 ";
+targ.profiles["release"].compileOpts.copts += "--debug_software_pipeline --optimizer_interlist --c_src_interlist ";
+targ.profiles["release"].compileOpts.copts += "--gen_opt_info=2 --advice:performance=all ";
+targ.profiles["release"].compileOpts.defs = "-DNDEBUG=1 ";
+Build.targets.$add(targ);
+
+/* We remove a few profiles, just to cut down on build time */
+delete targ.profiles["coverage"];
+delete targ.profiles["profile"];
+delete targ.profiles["whole_program"];
+delete targ.profiles["whole_program_debug"];
+delete targ.profiles["debug"];
+}
+
+/* Create a .zip or .tar file for redistribution. */
+Pkg.attrs.archiver = 'tar';
